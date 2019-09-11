@@ -12,12 +12,16 @@ $(document).ready(function(){
 firebase.initializeApp(firebaseConfig);
 var database = firebase.database();
 console.log(firebaseConfig.apiKey);
-$("#add-train").on("click", function(event){
+var name;
+var destination;
+var firsttrain;
+var frequency;
+$("#add-train").on("click", function() {
     event.preventDefault();
-    var name = $("#train-name").val().trim();
-    var destination = $("#destination").val().trim();
-    var firsttrain = $("#first-train").val().trim();
-    var frequency = $("#frequency").val().trim();
+    name = $("#train-name").val().trim();
+    destination = $("#destination").val().trim();
+    firsttrain = $("#first-train").val().trim();
+    frequency = $("#frequency").val().trim();
     console.log(name);
     console.log(destination);
     console.log(firsttrain);
@@ -27,22 +31,24 @@ $("#add-train").on("click", function(event){
         destination: destination,
         firsttrain: firsttrain,
         frequency: frequency,
-        minutesAway: minutesAway,
         dateAdded: firebase.database.ServerValue.TIMESTAMP
         });
         $("form")[0].reset();
 });
 database.ref().on("child_added", function(childSnapshot) {
+    console.log(childSnapshot.val());
+    var minutesAway;
         // Chang year so first train comes before now
-    var firstTrainNew = moment(childSnapshot.val().firstTrain, "hh:mm").subtract(1, "years");
+    var firstTrainNew = moment(childSnapshot.val().firsttrain, "HH:mm").subtract(1, "years");
         // Difference between the current and firstTrain
     var diffTime = moment().diff(moment(firstTrainNew), "minutes");
     var remainder = diffTime % childSnapshot.val().frequency;
         // Minutes until next train
     var minutesAway = childSnapshot.val().frequency - remainder;
+    console.log(minutesAway);
         // Next train time
     var nextTrain = moment().add(minutesAway, "minutes");
-    nextTrain = moment(nextTrain).format("hh:mm");
+    nextTrain = moment(nextTrain).format("HH:mm");
 
     $("#add-row").append("<tr><td>" + childSnapshot.val().name +
         "</td><td>" + childSnapshot.val().destination +
@@ -53,13 +59,6 @@ database.ref().on("child_added", function(childSnapshot) {
             // Handle the errors
     }, function(errorObject) {
         console.log("Errors handled: " + errorObject.code);
-        database.ref().orderByChild("dateAdded").limitToLast(1).on("child_added", function(snapshot) {
-                // Change the HTML to reflect
-        $("#train-name").html(snapshot.val().name);
-        $("#destination").html(snapshot.val().email);
-        $("#first-train").html(snapshot.val().age);
-        $("#frequency").html(snapshot.val().comment);
     });
-});
 });
 
