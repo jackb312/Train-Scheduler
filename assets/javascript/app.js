@@ -12,10 +12,12 @@ $(document).ready(function(){
 firebase.initializeApp(firebaseConfig);
 var database = firebase.database();
 console.log(firebaseConfig.apiKey);
+//global variables
 var name;
 var destination;
 var firsttrain;
 var frequency;
+//button function for adding train
 $("#add-train").on("click", function() {
     event.preventDefault();
     name = $("#train-name").val().trim();
@@ -26,6 +28,7 @@ $("#add-train").on("click", function() {
     console.log(destination);
     console.log(firsttrain);
     console.log(frequency);
+    //pushing to firebase database
     database.ref().push({
         name: name,
         destination: destination,
@@ -33,30 +36,30 @@ $("#add-train").on("click", function() {
         frequency: frequency,
         dateAdded: firebase.database.ServerValue.TIMESTAMP
         });
+        //resets form after pushing to firebase
         $("form")[0].reset();
 });
 database.ref().on("child_added", function(childSnapshot) {
     console.log(childSnapshot.val());
     var minutesAway;
-        // Chang year so first train comes before now
+        // snapshot of first train time
     var firstTrainNew = moment(childSnapshot.val().firsttrain, "HH:mm").subtract(1, "years");
-        // Difference between the current and firstTrain
+        // difference in time between first train and current moment
     var diffTime = moment().diff(moment(firstTrainNew), "minutes");
+        //modulus for different time and frequency
     var remainder = diffTime % childSnapshot.val().frequency;
-        // Minutes until next train
+        // minutes until next train
     var minutesAway = childSnapshot.val().frequency - remainder;
     console.log(minutesAway);
-        // Next train time
+        // next train time
     var nextTrain = moment().add(minutesAway, "minutes");
     nextTrain = moment(nextTrain).format("HH:mm");
-
     $("#add-row").append("<tr><td>" + childSnapshot.val().name +
         "</td><td>" + childSnapshot.val().destination +
         "</td><td>" + childSnapshot.val().frequency +
         "</td><td>" + nextTrain + 
         "</td><td>" + minutesAway + "</td></tr>");
-
-            // Handle the errors
+    // Errors
     }, function(errorObject) {
         console.log("Errors handled: " + errorObject.code);
     });
